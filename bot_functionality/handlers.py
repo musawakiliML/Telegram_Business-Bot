@@ -10,8 +10,8 @@ from telegram.ext import (
    filters, Updater, CallbackQueryHandler
 )
 
-from config import (
-   TELEGRAM_BOT_TOKEN, CLOUDINARY_API_KEY,
+from bot_functionality.config import (
+   CLOUDINARY_API_KEY,
    CLOUDINARY_API_NAME, CLOUDINARY_API_SECRET,
    FAUNA_API
 )
@@ -31,17 +31,17 @@ cloudinary.config(
 )
 
 # Creating Fauna Client
-fauna_client = FaunaClient(secret=FAUNA_API)
+fauna_client = FaunaClient(secret=FAUNA_API, domain="db.us.fauna.com", scheme="https")
 
 # Define Options for the ChatBot
 CHOOSING, CLASS_RATE, SME_DETAILS, CHOOSE_PREF, SME_CAT, ADD_PRODUCTS, SHOW_STOCKS, POST_VIEW_PRODUCTS = range(8)
 
 
 # Start Command Function
-def start(update, context: CallbackContext) -> int:
+async def start(update: Update, context: CallbackContext) -> int:
    bot = context.bot
    chat_id = update.message.chat.id
-   bot.send_message(
+   await bot.send_message(
       chat_id = chat_id,
       text = "Hi fellow, Welcome to SMEbot ,"
         "Please tell me about yourself, "
@@ -53,7 +53,7 @@ def start(update, context: CallbackContext) -> int:
 
 # Get Generic user data from user and store
 
-def choose(update, context):
+async def choose(update, context):
    bot = context.bot
    chat_id = update.message.chat.id
 
@@ -61,12 +61,12 @@ def choose(update, context):
    data = update.message.text.split(",")
 
    if len(data) < 3 or len(data) > 3:
-      bot.send_message(
+      await bot.send_message(
          chat_id = chat_id,
          text = "Invalid entry, please make sure to input the details "
             "as requested in the instructions"
       )
-      bot.send_message(
+      await bot.send_message(
          chat_id = chat_id,
          text = "Type /start, to restart bot"
       )
@@ -75,7 +75,7 @@ def choose(update, context):
 
    new_user = fauna_client.query(
       q.create(
-         q.collection("User"), {
+         q.collection("Users"), {
             "data":{
                "name":data[0],
                "email":data[1],
@@ -102,8 +102,8 @@ def choose(update, context):
          )
       ]
    ]
-   markup = InlineKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-   bot.send_message(
+   markup = InlineKeyboardMarkup(reply_keyboard)
+   await bot.send_message(
       chat_id = chat_id,
       text = "Collected information succesfully!..🎉🎉 \n"
         "Which of the following do you identify as ?",
@@ -113,7 +113,7 @@ def choose(update, context):
 
 # Class 
 
-def classer(update, context):
+async def classer(update, context):
    bot = context.bot
    chat_id = update.callback_query.message.chat.id
    name = context.user_data["user-name"]
@@ -122,11 +122,11 @@ def classer(update, context):
       fauna_client.query(
          q.update(
             q.ref(
-               q.collection("User"), context.user_data["user-id"]
+               q.collection("Users"), context.user_data["user-id"]
             ), {"data": {"is_smeowner":True}}
          )
       )
-      bot.send_message(
+      await bot.send_message(
          chat_id = chat_id,
          text = f"Great! {name}, please tell me about your business, "
             "provide your BrandName, Brand email, Address, and phone number"
@@ -135,7 +135,7 @@ def classer(update, context):
          reply_markup = ReplyKeyboardRemove()
       )
       return SME_DETAILS
-   elif update.callback_query.data.lower() == "customer":
+   if update.callback_query.data.lower() == "customer":
       categories = [
          [
             InlineKeyboardButton(
@@ -158,7 +158,7 @@ def classer(update, context):
             )
          ]
       ]
-      bot.send_message(
+      await bot.send_message(
          chat_id=chat_id,
          text="Here's a list of categories available"
          "Choose one that matches your interest",
@@ -168,8 +168,8 @@ def classer(update, context):
 
 # Cancel Control
 
-def cancel(update: Update, context: CallbackContext) -> int:
-   update.message.reply_text(
+async def cancel(update: Update, context: CallbackContext) -> int:
+   await update.message.reply_text(
       'Bye! I hope we can talk again some day.',
       reply_markup=ReplyKeyboardRemove()
    )

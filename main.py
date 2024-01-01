@@ -4,15 +4,12 @@ from telegram.ext import (
    ConversationHandler, MessageHandler,
    filters, Updater, CallbackQueryHandler, Application
 )
+from telegram import Update
 
 from bot_functionality.config import TELEGRAM_BOT_TOKEN
 
 # Initiating Bot Instance
-updater = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
-print(updater)
-
-dispatcher = updater.dispatcher
-
+application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 # Start application
 
@@ -30,16 +27,10 @@ def main():
          ]
       },
       fallbacks=[CommandHandler('cancel', handlers.cancel)],
-      allow_reentry=True
+      allow_reentry=True,
    )
-   dispatcher.add_handler(conversation_handler)
-   updater.start_polling()
-   updater.idle()
+   application.add_handler(conversation_handler)
+   application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
    main()
-
-# from telegram.ext import Application, CommandHandler
-# application = Application.builder().token('TOKEN').build()
-# application.add_handler(CommandHandler('start', start_callback))
-# application.run_polling()
