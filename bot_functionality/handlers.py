@@ -166,6 +166,50 @@ async def classer(update, context):
       )
       return CHOOSE_PREF
 
+# Get Business details
+async def business_details(update, context):
+   bot = context.bot
+   chat_id = update.message.chat.id
+   data = update.message.text.split(',')
+
+   if len(data) < 4 or len(data) > 4:
+      await bot.send_message(
+         chat_id = chat_id,
+         text = "Invalid entry, please make sure to input the details "
+            "as requested in the instructions"
+      )
+      return SME_DETAILS
+   context.user_data['sme_dets'] = data
+   categories = [
+      [
+         InlineKeyboardButton(
+            text="Clothing/Fashion",
+            callback_data="Clothing/Fashion"
+         ),
+         InlineKeyboardButton(
+            text="Hardware Accessories",
+            callback_data="Hardware Accessories"
+         )
+      ],
+      [
+         InlineKeyboardButton(
+            text="Food/Kitchen Ware",
+            callback_data="Food/Kitchen Ware"
+         ),
+         InlineKeyboardButton(
+            text="ArtnDesign",
+            callback_data="ArtnDesign"
+         )
+      ]
+   ]
+   markup = InlineKeyboardMarkup(categories)
+   await bot.send_message(
+      chat_id=chat_id,
+      text="Pick a category for your business from the options",
+      reply_markup=markup
+   )
+   return SME_CAT
+
 # Cancel Control
 
 async def cancel(update: Update, context: CallbackContext) -> int:
