@@ -210,6 +210,13 @@ async def business_details(update, context):
    )
    return SME_CAT
 
+# Update Business details
+
+async def business_details_update(update, context):
+   bot = context.bot
+   chat_id = update.callback_query.message.chat.id
+   choice = update.callback_query.data
+
 # Cancel Control
 
 async def cancel(update: Update, context: CallbackContext) -> int:
